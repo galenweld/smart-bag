@@ -16,6 +16,8 @@ const int d4 = 8; const int d5 = 9;
 const int d6 = 10; const int d7 = 11;
 //pins for temperature sensor
 const int ALERT_PIN = A3;
+//pin for LED
+const int ledOut = A0;
 
 LiquidCrystal lcd(rs, enable, d0, d1, d2, d3, d4, d5, d6, d7); 
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
@@ -33,6 +35,8 @@ void setup() {
     while (1); // halt
   }
   nfc.SAMConfig();
+  //LED
+  pinMode(ledOut, OUTPUT);
   //Temperature Sensor
   pinMode(ALERT_PIN,INPUT);
   sensor0.begin();
@@ -73,6 +77,11 @@ void loop() {
           lcd.setCursor(0, 1);
           lcd.print("Authenticated");
           
+          digitalWrite(A0, HIGH);   // turn the LED on (HIGH is the voltage level)
+          delay(2000);                       // wait for a second
+          digitalWrite(A0, LOW);    // turn the LED off by making the voltage LOW
+          delay(2000);                       // wait for a second
+          
           nfc.PrintHexChar(data, 16);
           delay(1000);
         }
@@ -97,7 +106,13 @@ void loop() {
       if (success) {
         nfc.PrintHexChar(data, 4);
         lcd.setCursor(0, 1);
-        lcd.print("Authenticated");    
+        lcd.print("Authenticated");
+        
+        digitalWrite(A0, HIGH);   // turn the LED on (HIGH is the voltage level)
+        delay(2000);                       // wait for a second
+        digitalWrite(A0, LOW);    // turn the LED off by making the voltage LOW
+        delay(2000);                       // wait for a second
+          
         delay(1000);
       }
       else {
