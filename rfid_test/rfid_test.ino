@@ -41,10 +41,17 @@ products from Adafruit!
 #include <Adafruit_PN532.h>
 
 // If using the breakout with SPI, define the pins for SPI communication.
+/*
 #define PN532_SCK  (2)
 #define PN532_MOSI (3)
 #define PN532_SS   (4)
 #define PN532_MISO (5)
+*/
+
+#define PN532_SCK  (0)
+#define PN532_MOSI (1)
+#define PN532_SS   (2)
+#define PN532_MISO (3)
 
 // If using the breakout or shield with I2C, define just the pins connected
 // to the IRQ and reset lines.  Use the values below (2, 3) for the shield!
@@ -67,7 +74,7 @@ Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 //Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 
 void setup(void) {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Hello!");
 
   nfc.begin();

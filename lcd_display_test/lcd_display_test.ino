@@ -41,24 +41,22 @@
 #include <LiquidCrystal.h>
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-//LiquidCrystal lcd(9, 10, 5, 4, 3, 2);
+//LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+//LiquidCrystal lcd(12, 11, 7, 8, 9, 10);
+LiquidCrystal lcd(12, 11, 9, 8, 10, 7);
 
 
 void setup() {
   Serial.begin(9600);
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
+  lcd.clear();
   // Print a message to the LCD.
-  lcd.print("I feel attacked");
-  lcd.setCursor(0, 1);
-  lcd.print("by this content");
 }
 
 void loop() {
   // set the cursor to column 0, line 1
   // (note: line 1 is the second row, since counting begins with 0):
-  
-  // print the number of seconds since reset:
+  lcd.print("Smart Bag on");  // print the number of seconds since reset:
 }
 
