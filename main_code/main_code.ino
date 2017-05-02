@@ -31,9 +31,7 @@ void setup() {
   //RFID Sensor
   nfc.begin();
   uint32_t versiondata = nfc.getFirmwareVersion();
-  if (! versiondata) {
-    while (1); // halt
-  }
+  if (! versiondata) { while (1); }
   nfc.SAMConfig();
   //LED
   pinMode(ledOut, OUTPUT);
@@ -53,8 +51,9 @@ void loop() {
   lcd.clear();
   temperature = sensor0.readTempC();
 
-  //lcd.print(temperature);
-  //lcd.print(" Degrees");
+  if(temperature > 70){
+    lcd.print(temperature);
+  }
   
   uint8_t success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
@@ -76,12 +75,8 @@ void loop() {
         if (success) {
           lcd.setCursor(0, 1);
           lcd.print("Authenticated");
-          
-          digitalWrite(A0, HIGH);   // turn the LED on (HIGH is the voltage level)
-          delay(2000);                       // wait for a second
-          digitalWrite(A0, LOW);    // turn the LED off by making the voltage LOW
-          delay(2000);                       // wait for a second
-          
+          flashLight();
+
           nfc.PrintHexChar(data, 16);
           delay(1000);
         }
@@ -107,12 +102,8 @@ void loop() {
         nfc.PrintHexChar(data, 4);
         lcd.setCursor(0, 1);
         lcd.print("Authenticated");
-        
-        digitalWrite(A0, HIGH);   // turn the LED on (HIGH is the voltage level)
-        delay(2000);                       // wait for a second
-        digitalWrite(A0, LOW);    // turn the LED off by making the voltage LOW
-        delay(2000);                       // wait for a second
-          
+        flashLight();
+
         delay(1000);
       }
       else {
@@ -122,4 +113,11 @@ void loop() {
       }
     }
   }
+}
+
+void flashLight(){
+  digitalWrite(ledOut, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(2000);                       // wait for a second
+  digitalWrite(ledOut, LOW);    // turn the LED off by making the voltage LOW
+  delay(2000);                       // wait for a second
 }
