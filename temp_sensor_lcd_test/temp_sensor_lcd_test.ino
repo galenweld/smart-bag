@@ -53,7 +53,7 @@ TMP102 sensor0(0x48); // Initialize sensor at I2C address 0x48
 LiquidCrystal lcd(rs, enable, d0, d1, d2, d3, d4, d5, d6, d7); 
 
 void setup() {
-  Serial.begin(9600); // Start serial communication at 9600 baud
+  //Serial.begin(9600); // Start serial communication at 9600 baud
   pinMode(ALERT_PIN,INPUT);  // Declare alertPin as an input
   sensor0.begin();  // Join I2C bus
   lcd.begin(16, 2);
@@ -132,7 +132,7 @@ void loop()
   sensor0.sleep();
 
   // Print temperature and alarm state
-  
+  /*
   Serial.print("Temperature: ");
   Serial.print(temperature);
 
@@ -141,6 +141,6 @@ void loop()
 
   Serial.print("\tAlert Register: ");
   Serial.println(alertRegisterState);
-  
+  */
   delay(1000);  // Wait 1000ms
 }
