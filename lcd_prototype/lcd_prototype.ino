@@ -24,6 +24,9 @@ Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 #define LCD_ENABLE (13)
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, 4, 5, 6, 7, 8, 9, 10, 11); 
 
+// Pin for LED
+#define LED_OUT (A0)
+
 // Stuff for thermometer
 TMP102 thermometer(0x48);
 
@@ -92,11 +95,16 @@ void loop(void) {
   report_status();
   debug_med_status();
 
+  // Date and Temp
+  lcd.setCursor(0,1);lcd.print("t:");lcd.print(temp);
+
+  lcd.print(" d:");lcd.print(date);
+
   // Look for a Card
   find_and_update_card();
 
   // Increment the date
-  //date++;
+  date++;
 
   // Wait a bit before reading the card again
   delay(1000);
@@ -126,6 +134,8 @@ void find_and_update_card(void) {
       {
         uint8_t data[16];
 
+        Serial.println("card read");
+
         // Try to read the contents of block 4
         success = nfc.mifareclassic_ReadDataBlock(4, data);
     
@@ -152,14 +162,6 @@ void report_status(void) {
   else if (medStatus[EPI] != NOM) print_top_line(EPI, medStatus[EPI]);
   else if (medStatus[GLC] != NOM) print_top_line(GLC, medStatus[GLC]);
   else {lcd.clear(); lcd.setCursor(0,0); lcd.print("SmartBag- normal");}
-
-  // Date and Temp
-  lcd.setCursor(0,1);
-  lcd.print("temp:");
-  lcd.print(temp);
-
-  lcd.setCursor(0,14);
-  lcd.print(date);
 }
 
 void print_top_line(int m, int r) {
@@ -211,16 +213,14 @@ void invalidate_med(int med, int e, int reason) {
 
 
 void debug_med_status(void) {
-  //lcd.clear();
-  //lcd.setCursor(0,0);
-  //lcd.print(medStatus[ALB]); lcd.print(" ");
-  //lcd.print(medStatus[ASA]); lcd.print(" ");
-  //lcd.print(medStatus[EPI]); lcd.print(" ");
-  //lcd.print(medStatus[GLC]);
-
   Serial.print(medStatus[ALB]);Serial.print(":");
   Serial.print(medStatus[ASA]);Serial.print(":");
   Serial.print(medStatus[EPI]);Serial.print(":");
   Serial.println(medStatus[GLC]);
 }
 
+void flashLight(){
+  digitalWrite(LED_OUT, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(500);                    // wait for a second
+  digitalWrite(LED_OUT, LOW);    // turn the LED off by making the voltage LOW
+}
