@@ -46,9 +46,9 @@ const int med_low_temp[] = {0, 0, 32, 0};
 #define MED_STATUS (2) // medication status
 
 // Global Var Defs
-float temp;
-int medStatus[] = {NOM, NOM, NOM, NOM}; // Albuterol, Aspirin, Epi, Glucose
 int date = 0;
+float temp = 70.0;
+int medStatus[4] = {NOM, NOM, NOM, NOM}; // Albuterol, Aspirin, Epi, Glucose
 
 void setup(void) {
   Serial.begin(9600);
@@ -93,6 +93,8 @@ void loop(void) {
 void find_and_update_card(void) {
   // Waits until a card is found, reads its info, determines if the med is ok, and then
   // updates the card and the global medStatus and delays.
+
+  
   uint8_t success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
@@ -101,17 +103,17 @@ void find_and_update_card(void) {
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   
   if (success) {
-    Serial.println("Found a card");
+    //Serial.println("Found a card");
     
     if (uidLength == 4) {
       // Try with the factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
-      Serial.println("Trying to authenticate block 4 with default KEYA value");
+      //Serial.println("Trying to authenticate block 4 with default KEYA value");
       uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
       success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
     
       if (success)
       {
-        Serial.println("Sector 1 (Blocks 4..7) has been authenticated");
+        //Serial.println("Sector 1 (Blocks 4..7) has been authenticated");
         uint8_t data[16];
 
         // Try to read the contents of block 4
@@ -162,6 +164,7 @@ void report_status(void) {
 
   Serial.print("LCD: Date: ");
   Serial.println(date);
+  debug_med_status();
   Serial.println("");
 }
 
@@ -169,7 +172,7 @@ void report_status(void) {
 void med_handler(int m, int e, int v) {
   // universal med handler. takes med, exp, and valid
   // updates and invalidates as needed
-  if (date > e || v == EXP) invalidate_med(m, e, EXP);
+  if (date >= e || v == EXP) invalidate_med(m, e, EXP);
   else if (temp > med_high_temp[m] || v == HOT) invalidate_med(m, e, HOT);
   else if (temp < med_low_temp[m] || v == HOT) invalidate_med(m, e, HOT);
 
@@ -195,5 +198,15 @@ void invalidate_med(int med, int e, int reason) {
   medStatus[med] = reason;
 
   
+}
+
+
+void debug_med_status(void) {
+  delay(10);
+  Serial.print(medStatus[ALB]);Serial.print(":");
+  Serial.print(medStatus[ASA]);Serial.print(":");
+  Serial.print(medStatus[EPI]);Serial.print(":");
+  Serial.println(medStatus[GLC]);
+  delay(10);
 }
 
