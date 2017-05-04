@@ -13,8 +13,8 @@
 #include <LiquidCrystal.h>
 
 // Pins for the RFID Reader
-#define PN532_SCK  (0)
-#define PN532_MOSI (1)
+#define PN532_SCK  (A2)
+#define PN532_MOSI (A3)
 #define PN532_SS   (2)
 #define PN532_MISO (3)
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
