@@ -22,10 +22,6 @@ Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 // Pins and Setup for for LCD
 #define LCD_RS (12)
 #define LCD_ENABLE (13)
-const int d0 = 4; const int d1 = 5;
-const int d2 = 6; const int d3 = 7;
-const int d4 = 8; const int d5 = 9;
-const int d6 = 10; const int d7 = 11;
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, 4, 5, 6,7, 8, 9, 10, 11); 
 
 // Stuff for thermometer
@@ -61,7 +57,7 @@ void setup(void) {
   thermometer.begin();
 
   // Set Up LCD
-  lcd.begin(16, 2);
+  lcd.begin(16, 2); // number of chars and lines
   lcd.clear();
   lcd.print("SmartBag");
 
