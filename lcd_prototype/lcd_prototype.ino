@@ -96,12 +96,15 @@ void loop(void) {
   debug_med_status();
 
   // Date and Temp
-  lcd.setCursor(0,1);lcd.print("t:");lcd.print(temp);
+  lcd.setCursor(0,1);lcd.print(temp);lcd.print('F');
 
-  lcd.print(" d:");lcd.print(date);
+  lcd.setCursor(14,1);lcd.print(date); // offset printing
 
   // Look for a Card
   find_and_update_card();
+
+  // Notify User that Their Card Has Been Read
+  flashLight();
 
   // Increment the date
   date++;
@@ -160,7 +163,7 @@ void report_status(void) {
   if      (medStatus[ALB] != NOM) print_top_line(ALB, medStatus[ALB]);
   else if (medStatus[ASA] != NOM) print_top_line(ASA, medStatus[ASA]);
   else if (medStatus[EPI] != NOM) print_top_line(EPI, medStatus[EPI]);
-  //else if (medStatus[GLC] != NOM) print_top_line(GLC, medStatus[GLC]);
+  else if (medStatus[GLC] != NOM) print_top_line(GLC, medStatus[GLC]);
   else {lcd.clear(); lcd.setCursor(0,0); lcd.print("SmartBag- normal");}
 }
 
