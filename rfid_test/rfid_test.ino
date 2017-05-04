@@ -41,18 +41,17 @@ products from Adafruit!
 #include <Adafruit_PN532.h>
 
 // If using the breakout with SPI, define the pins for SPI communication.
-/*
 #define PN532_SCK  (2)
 #define PN532_MOSI (3)
 #define PN532_SS   (4)
 #define PN532_MISO (5)
-*/
 
+/*
 #define PN532_SCK  (0)
 #define PN532_MOSI (1)
 #define PN532_SS   (2)
 #define PN532_MISO (3)
-
+*/
 // If using the breakout or shield with I2C, define just the pins connected
 // to the IRQ and reset lines.  Use the values below (2, 3) for the shield!
 #define PN532_IRQ   (2)
@@ -126,7 +125,7 @@ void loop(void) {
     
     // Start with block 4 (the first block of sector 1) since sector 0
     // contains the manufacturer data and it's probably better just
-    // to leave it alone unless you know what you're doing
+    // to leave it alone unless you know what you're doing  
       success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
     
       if (success)
@@ -136,8 +135,8 @@ void loop(void) {
     
         // If you want to write something to block 4 to test with, uncomment
     // the following line and this text should be read back in a minute
-        //memcpy(data, (const uint8_t[]){ 'a', 'd', 'a', 'f', 'r', 'u', 'i', 't', '.', 'c', 'o', 'm', 0, 0, 0, 0 }, sizeof data);
-        // success = nfc.mifareclassic_WriteDataBlock (4, data);
+        //memcpy(data, (const uint8_t[]){ 'e', 'p', 'i', ' ', '1', '5', ' ', 1, 0, 0, 0, 0, 0, 0, 0, 0 }, sizeof data);
+        //success = nfc.mifareclassic_WriteDataBlock (4, data);
 
         // Try to read the contents of block 4
         success = nfc.mifareclassic_ReadDataBlock(4, data);

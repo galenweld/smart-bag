@@ -74,10 +74,14 @@ void loop() {
         success = nfc.mifareclassic_ReadDataBlock(4, data);
         if (success) {
           lcd.setCursor(0, 1);
-          lcd.print("Authenticated");
+          if(){
+            
+          }
+          //lcd.print("Authenticated");
           flashLight();
-
+        
           nfc.PrintHexChar(data, 16);
+          //lcd.print(data);
           delay(1000);
         }
         else {
