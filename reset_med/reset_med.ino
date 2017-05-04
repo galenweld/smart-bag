@@ -36,9 +36,9 @@ const int med_low_temp[] = {0, 0, 32, 0};
 
 // Definitions to make code more readable
 #define ALB (0)  // albuterol
-#define ASA (2)  // aspirin
-#define EPI (3)  // epinepherine
-#define GLC (4)  // glucose
+#define ASA (1)  // aspirin
+#define EPI (2)  // epinepherine
+#define GLC (3)  // glucose
 
 #define NOM (0)  // medication is normal
 #define EXP (1)  // medication is expired

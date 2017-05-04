@@ -35,15 +35,29 @@ For example 02:15:00 would represent a EpiPen expiring at 15 that is valid.
 #define PN532_IRQ   (2)
 #define PN532_RESET (3)  // Not connected by default on the NFC Shield
 
-/**************************************************************************/
-/* Enter Data to Write Below:
-/**************************************************************************/
-const uint8_t med[] = { 2, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
+// Definitions to make code more readable
+#define ALB (0)  // albuterol
+#define ASA (1)  // aspirin
+#define EPI (2)  // epinepherine
+#define GLC (3)  // glucose
+
+#define NOM (0)  // medication is normal
+#define EXP (1)  // medication is expired
+#define HOT (2)  // medication has exceeded environmental constraints
+
+#define MED_TYPE   (0) // medication type
+#define MED_EXP    (1) // medication expiration date
+#define MED_STATUS (2) // medication status
 
 // Use this line for a breakout with a software SPI connection (recommended):
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
+
+/**************************************************************************/
+/* Enter Data to Write Below:
+/**************************************************************************/
+const uint8_t med[] = { ASA, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 void setup(void) {
   Serial.begin(9600);
