@@ -1,65 +1,40 @@
-#include <Adafruit_PN532.h>
-
 /**************************************************************************/
 /*! 
-    @file     readMifare.pde
-    @author   Adafruit Industries
-  @license  BSD (see license.txt)
-
-    This example will wait for any ISO14443A card or tag, and
-    depending on the size of the UID will attempt to read from it.
-   
-    If the card has a 4-byte UID it is probably a Mifare
-    Classic card, and the following steps are taken:
-   
-    - Authenticate block 4 (the first block of Sector 1) using
-      the default KEYA of 0XFF 0XFF 0XFF 0XFF 0XFF 0XFF
-    - If authentication succeeds, we can then read any of the
-      4 blocks in that sector (though only block 4 is read here)
-   
-    If the card has a 7-byte UID it is probably a Mifare
-    Ultralight card, and the 4 byte pages can be read directly.
-    Page 4 is read by default since this is the first 'general-
-    purpose' page on the tags.
-
-
-This is an example sketch for the Adafruit PN532 NFC/RFID breakout boards
-This library works with the Adafruit NFC breakout 
-  ----> https://www.adafruit.com/products/364
- 
-Check out the links above for our tutorials and wiring diagrams 
-These chips use SPI or I2C to communicate.
-
-Adafruit invests time and resources providing this open source code, 
-please support Adafruit and open-source hardware by purchasing 
-products from Adafruit!
+    Protoype for project. Outputs info over serial connection instead
+    of LCD.
 
 */
 /**************************************************************************/
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_PN532.h>
+#include <SparkFunTMP102.h>
+#include "SparkFunTMP102.h"
 
-
+// Pins for the RFID Reader
 #define PN532_SCK  (2)
 #define PN532_MOSI (3)
 #define PN532_SS   (4)
 #define PN532_MISO (5)
-
-// If using the breakout or shield with I2C, define just the pins connected
-// to the IRQ and reset lines.  Use the values below (2, 3) for the shield!
 #define PN532_IRQ   (2)
 #define PN532_RESET (3)  // Not connected by default on the NFC Shield
-
-// Use this line for a breakout with a software SPI connection (recommended):
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
+
+// Stuff for thermometer
+TMP102 thermometer(0x48);
+
+// Global Var Defs
+float temp;
+int medStatus[] = {0, 0, 0, 0}; // Albuterol, Aspirin, Epi, Glucose
+// 0=good, 1=expired, 2=temp
+int date = 0;
 
 void setup(void) {
   Serial.begin(9600);
-  Serial.println("Hello!");
+  thermometer.begin();
 
+  // Set Up RFID
   nfc.begin();
-
   uint32_t versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
     Serial.print("Didn't find PN53x board");
@@ -73,11 +48,20 @@ void setup(void) {
   // configure board to read RFID tags
   nfc.SAMConfig();
   
-  Serial.println("Waiting for an ISO14443A Card ...");
+  Serial.println("Finished Config, Waiting For Cards");
 }
 
 
 void loop(void) {
+  // Get Temp
+  thermometer.wakeup();
+  temp = thermometer.readTempF();
+  thermometer.sleep();
+
+  // Report Status
+  report_status();
+
+  // Look for a Card
   uint8_t success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
@@ -88,26 +72,13 @@ void loop(void) {
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   
   if (success) {
-    // Display some basic information about the card
-    Serial.println("Found an ISO14443A card");
-    Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
-    Serial.print("  UID Value: ");
-    nfc.PrintHex(uid, uidLength);
-    Serial.println("");
+    Serial.println("Found a card");
     
     if (uidLength == 4)
     {
-      // We probably have a Mifare Classic card ... 
-      Serial.println("Seems to be a Mifare Classic card (4 byte UID)");
-    
-      // Now we need to try to authenticate it for read/write access
       // Try with the factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
       Serial.println("Trying to authenticate block 4 with default KEYA value");
       uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-    
-    // Start with block 4 (the first block of sector 1) since sector 0
-    // contains the manufacturer data and it's probably better just
-    // to leave it alone unless you know what you're doing
       success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
     
       if (success)
@@ -117,18 +88,24 @@ void loop(void) {
     
         // If you want to write something to block 4 to test with, uncomment
         // the following line and this text should be read back in a minute
-        memcpy(data, (const uint8_t[]){ 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, sizeof data);
-        success = nfc.mifareclassic_WriteDataBlock (4, data);
+        //memcpy(data, (const uint8_t[]){ 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, sizeof data);
+        //success = nfc.mifareclassic_WriteDataBlock (4, data);
 
         // Try to read the contents of block 4
         success = nfc.mifareclassic_ReadDataBlock(4, data);
     
         if (success)
         {
-          // Data seems to have been read ... spit it out
-          Serial.println("Reading Block 4:");
-          nfc.PrintHexChar(data, 16);
-          Serial.println("");
+          // Dispatch to the appropriate helper
+          Serial.println("Determining Med Type");
+          int med_type = (int) data[0];
+          int expires = (int) data[1];
+          int valid = (int) data[2];
+          
+          if (med_type == 0) albuterol(expires, valid);
+          if (med_type == 1) aspirin(expires, valid);
+          if (med_type == 2) epi(expires, valid);
+          if (med_type == 3) glucose(expires, valid);
       
           // Wait a bit before reading the card again
           delay(1000);
@@ -150,5 +127,69 @@ void loop(void) {
 
     }
   }
+  date++; // inc date
+}
+
+void report_status(void) {
+  // Reads the status from global variables and updates information on display.
+  
+  // Med Status
+  if (medStatus[0]==0 && medStatus[1]==0 && medStatus[2]==0 && medStatus[3]==0) {
+    Serial.println("LCD: System Normal");
+  }
+  else if (medStatus[0] != 0) {
+    // bad albuterol
+    if (medStatus[1] == 1) Serial.println("LCD: Albuterol Expired");
+    if (medStatus[1] == 2) Serial.println("LCD: Albuterol out of temp");
+  }
+  
+  else if (medStatus[0] != 0) {
+    // bad aspirin
+    if (medStatus[1] == 1) Serial.println("LCD: Aspirin Expired");
+    if (medStatus[1] == 2) Serial.println("LCD: Aspirin out of temp");
+  }
+  else if (medStatus[0] != 0) {
+    // bad epi
+    if (medStatus[1] == 1) Serial.println("LCD: EpiPen Expired");
+    if (medStatus[1] == 2) Serial.println("LCD: EpiPen out of temp");
+  }
+  else if (medStatus[0] != 0) {
+    // bad glucose
+    if (medStatus[1] == 1) Serial.println("LCD: Glucose Expired");
+    if (medStatus[1] == 2) Serial.println("LCD: Glucose out of temp");
+  }
+
+  // Date and Temp
+  Serial.print("LCD: Temperature: ");
+  Serial.println(temp);
+
+  Serial.print("LCD: Date: ");
+  Serial.println(date);
+  Serial.println("");
+  
+}
+
+
+// Medication handlers
+void albuterol(int e, int v) {
+  Serial.println("Found Albuterol");
+}
+
+void aspirin(int e, int v) {
+  Serial.println("Found Aspirin");
+}
+
+void epi(int e, int v) {
+  Serial.println("Found EpiPen");
+}
+
+void glucose(int e, int v) {
+  Serial.println("Found Glucose");
+}
+
+// Medication Updates
+void invalidate_med(int med, int reason) {
+  // immediately erases the scanned medication and invalidates it
+  // then, updates system status for the given med with the given reason
 }
 
