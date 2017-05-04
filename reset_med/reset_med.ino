@@ -131,7 +131,7 @@ void loop(void) {
           // Data seems to have been read ... spit it out
           lcd.clear();
           lcd.setCursor(0,0);
-          lcd.print("card read");
+          lcd.print("card tapped");
 
           data[2] = 0;
           success = nfc.mifareclassic_WriteDataBlock (4, data);
@@ -140,10 +140,10 @@ void loop(void) {
           
           lcd.clear();
           lcd.setCursor(0,0);
-          lcd.print("card found");
+          lcd.print("card cleared");
       
           // Wait a bit before reading the card again
-          delay(1000);
+          delay(2000);
         }
 
         else {lcd.clear(); lcd.print("err-block read");}
