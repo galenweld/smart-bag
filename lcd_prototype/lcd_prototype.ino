@@ -22,7 +22,7 @@ Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 // Pins and Setup for for LCD
 #define LCD_RS (12)
 #define LCD_ENABLE (13)
-LiquidCrystal lcd(LCD_RS, LCD_ENABLE, 4, 5, 6,7, 8, 9, 10, 11); 
+LiquidCrystal lcd(LCD_RS, LCD_ENABLE, 4, 5, 6, 7, 8, 9, 10, 11); 
 
 // Stuff for thermometer
 TMP102 thermometer(0x48);
@@ -59,14 +59,14 @@ void setup(void) {
   // Set Up LCD
   lcd.begin(16, 2); // number of chars and lines
   lcd.clear();
-  lcd.print("SmartBag");
+  lcd.print("Loading");
 
   // Set Up RFID
   nfc.begin();
   uint32_t versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
     lcd.clear();
-    lcd.print("Err-No RFID");
+    lcd.print("err-no RFID");
     while (1); // halt
   }
   // Got ok data, print it out!
@@ -88,13 +88,17 @@ void loop(void) {
   thermometer.sleep();
 
   // Report Status
-  report_status();
+  //report_status();
+  debug_med_status();
 
   // Look for a Card
   find_and_update_card();
 
   // Increment the date
   date++;
+
+  // Wait a bit before reading the card again
+  delay(1000);
 
 }
 
@@ -111,17 +115,14 @@ void find_and_update_card(void) {
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   
   if (success) {
-    //Serial.println("Found a card");
     
     if (uidLength == 4) {
       // Try with the factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
-      //Serial.println("Trying to authenticate block 4 with default KEYA value");
       uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
       success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
     
       if (success)
       {
-        //Serial.println("Sector 1 (Blocks 4..7) has been authenticated");
         uint8_t data[16];
 
         // Try to read the contents of block 4
@@ -132,14 +133,12 @@ void find_and_update_card(void) {
           // Call Helper          
           med_handler((int)data[MED_TYPE], (int)data[MED_EXP], (int)data[MED_STATUS]);
       
-          // Wait a bit before reading the card again
-          delay(1000);
         }
-        else {Serial.println("Ooops ... unable to read the requested block.  Try another key?");}
+        else {lcd.clear(); lcd.print("err-block read");}
       }
-      else {Serial.println("Ooops ... authentication failed: Try another key?");}
+      else {lcd.clear(); lcd.print("err-auth");}
     }
-    else {Serial.println("Card UID of improper length - error.");}
+    else {lcd.clear(); lcd.print("err-uid length");}
   }
 }
 
@@ -147,33 +146,34 @@ void report_status(void) {
   // Reads the status from global variables and updates information on display.
   
   // Med Status
-  if (medStatus[ALB] != NOM) {
-    if (medStatus[ALB] == EXP) Serial.println("LCD: Albuterol Expired");
-    if (medStatus[ALB] == HOT) Serial.println("LCD: Albuterol out of temp");
-  }
-  
-  else if (medStatus[ASA] != NOM) {
-    if (medStatus[ASA] == EXP) Serial.println("LCD: Aspirin Expired");
-    if (medStatus[ASA] == HOT) Serial.println("LCD: Aspirin out of temp");
-  }
-  else if (medStatus[EPI] != NOM) {
-    if (medStatus[EPI] == EXP) Serial.println("LCD: EpiPen Expired");
-    if (medStatus[EPI] == HOT) Serial.println("LCD: EpiPen out of temp");
-  }
-  else if (medStatus[GLC] != NOM) {
-    if (medStatus[GLC] == EXP) Serial.println("LCD: Glucose Expired");
-    if (medStatus[GLC] == HOT) Serial.println("LCD: Glucose out of temp");
-  }
-  else {Serial.println("LCD: System Normal");}
+  if      (medStatus[ALB] != NOM) print_top_line(ALB, medStatus[ALB]);
+  else if (medStatus[ASA] != NOM) print_top_line(ASA, medStatus[ASA]);
+  else if (medStatus[EPI] != NOM) print_top_line(EPI, medStatus[EPI]);
+  else if (medStatus[GLC] != NOM) print_top_line(GLC, medStatus[GLC]);
+  else {lcd.clear(); lcd.setCursor(0,0); lcd.print("SmartBag- normal");}
 
   // Date and Temp
-  Serial.print("LCD: Temperature: ");
-  Serial.println(temp);
+  lcd.setCursor(0,1);
+  lcd.print("temp:");
+  lcd.print(temp);
 
-  Serial.print("LCD: Date: ");
-  Serial.println(date);
-  debug_med_status();
-  Serial.println("");
+  lcd.setCursor(0,14);
+  lcd.print(date);
+}
+
+void print_top_line(int m, int r) {
+  // prints the top line of the status based on given med and reason
+  lcd.clear();
+  lcd.setCursor(0,0);
+
+  if (m==ALB) lcd.print("Albuterol "); 
+  if (m==ASA) lcd.print("Aspirin   ");
+  if (m==EPI) lcd.print("EpiPen    ");
+  if (m==GLC) lcd.print("Glucose   ");
+
+  if (r>2)    lcd.print(" bad");
+  if (r==EXP) lcd.print(" exp");
+  if (r==HOT) lcd.print("temp");
 }
 
 
@@ -210,11 +210,11 @@ void invalidate_med(int med, int e, int reason) {
 
 
 void debug_med_status(void) {
-  delay(10);
-  Serial.print(medStatus[ALB]);Serial.print(":");
-  Serial.print(medStatus[ASA]);Serial.print(":");
-  Serial.print(medStatus[EPI]);Serial.print(":");
-  Serial.println(medStatus[GLC]);
-  delay(10);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(medStatus[ALB]); lcd.print(" ");
+  lcd.print(medStatus[ASA]); lcd.print(" ");
+  lcd.print(medStatus[EPI]); lcd.print(" ");
+  lcd.print(medStatus[GLC]);
 }
 
