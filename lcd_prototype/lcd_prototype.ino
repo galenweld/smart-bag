@@ -13,8 +13,8 @@
 #include <LiquidCrystal.h>
 
 // Pins for the RFID Reader
-#define PN532_SCK  (0)
-#define PN532_MOSI (1)
+#define PN532_SCK  (A2) //0
+#define PN532_MOSI (A3) //1
 #define PN532_SS   (2)
 #define PN532_MISO (3)
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
@@ -54,6 +54,7 @@ float temp = 70.0;
 int medStatus[4] = {NOM, NOM, NOM, NOM}; // Albuterol, Aspirin, Epi, Glucose
 
 void setup(void) {
+  Serial.begin(9600);
   thermometer.begin();
 
   // Set Up LCD
@@ -88,14 +89,14 @@ void loop(void) {
   thermometer.sleep();
 
   // Report Status
-  //report_status();
+  report_status();
   debug_med_status();
 
   // Look for a Card
   find_and_update_card();
 
   // Increment the date
-  date++;
+  //date++;
 
   // Wait a bit before reading the card again
   delay(1000);
@@ -210,11 +211,16 @@ void invalidate_med(int med, int e, int reason) {
 
 
 void debug_med_status(void) {
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print(medStatus[ALB]); lcd.print(" ");
-  lcd.print(medStatus[ASA]); lcd.print(" ");
-  lcd.print(medStatus[EPI]); lcd.print(" ");
-  lcd.print(medStatus[GLC]);
+  //lcd.clear();
+  //lcd.setCursor(0,0);
+  //lcd.print(medStatus[ALB]); lcd.print(" ");
+  //lcd.print(medStatus[ASA]); lcd.print(" ");
+  //lcd.print(medStatus[EPI]); lcd.print(" ");
+  //lcd.print(medStatus[GLC]);
+
+  Serial.print(medStatus[ALB]);Serial.print(":");
+  Serial.print(medStatus[ASA]);Serial.print(":");
+  Serial.print(medStatus[EPI]);Serial.print(":");
+  Serial.println(medStatus[GLC]);
 }
 
