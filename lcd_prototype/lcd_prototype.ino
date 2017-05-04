@@ -4,11 +4,13 @@
 
 */
 /**************************************************************************/
+// Libraries Needed
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_PN532.h>
 #include <SparkFunTMP102.h>
 #include "SparkFunTMP102.h"
+#include <LiquidCrystal.h>
 
 // Pins for the RFID Reader
 #define PN532_SCK  (0)
@@ -17,6 +19,14 @@
 #define PN532_MISO (3)
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
+// Pins and Setup for for LCD
+#define LCD_RS (12)
+#define LCD_ENABLE (13)
+const int d0 = 4; const int d1 = 5;
+const int d2 = 6; const int d3 = 7;
+const int d4 = 8; const int d5 = 9;
+const int d6 = 10; const int d7 = 11;
+LiquidCrystal lcd(LCD_RS, LCD_ENABLE, 4, 5, 6,7, 8, 9, 10, 11); 
 
 // Stuff for thermometer
 TMP102 thermometer(0x48);
@@ -48,25 +58,30 @@ float temp = 70.0;
 int medStatus[4] = {NOM, NOM, NOM, NOM}; // Albuterol, Aspirin, Epi, Glucose
 
 void setup(void) {
-  Serial.begin(9600);
   thermometer.begin();
+
+  // Set Up LCD
+  lcd.begin(16, 2);
+  lcd.clear();
+  lcd.print("SmartBag");
 
   // Set Up RFID
   nfc.begin();
   uint32_t versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
-    Serial.print("Didn't find PN53x board");
+    lcd.clear();
+    lcd.print("Err-No RFID");
     while (1); // halt
   }
   // Got ok data, print it out!
-  Serial.print("Found chip PN5"); Serial.println((versiondata>>24) & 0xFF, HEX); 
-  Serial.print("Firmware ver. "); Serial.print((versiondata>>16) & 0xFF, DEC); 
-  Serial.print('.'); Serial.println((versiondata>>8) & 0xFF, DEC);
+  lcd.clear();
+  lcd.print("RFID Found");
   
   // configure board to read RFID tags
   nfc.SAMConfig();
   
-  Serial.println("Finished Config, Waiting For Cards");
+  lcd.clear();
+  lcd.print("Welcome");
 }
 
 
