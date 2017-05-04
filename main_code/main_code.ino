@@ -74,9 +74,7 @@ void loop() {
         success = nfc.mifareclassic_ReadDataBlock(4, data);
         if (success) {
           lcd.setCursor(0, 1);
-          if(){
-            
-          }
+
           //lcd.print("Authenticated");
           flashLight();
         
