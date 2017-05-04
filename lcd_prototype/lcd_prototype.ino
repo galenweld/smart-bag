@@ -160,7 +160,7 @@ void report_status(void) {
   if      (medStatus[ALB] != NOM) print_top_line(ALB, medStatus[ALB]);
   else if (medStatus[ASA] != NOM) print_top_line(ASA, medStatus[ASA]);
   else if (medStatus[EPI] != NOM) print_top_line(EPI, medStatus[EPI]);
-  else if (medStatus[GLC] != NOM) print_top_line(GLC, medStatus[GLC]);
+  //else if (medStatus[GLC] != NOM) print_top_line(GLC, medStatus[GLC]);
   else {lcd.clear(); lcd.setCursor(0,0); lcd.print("SmartBag- normal");}
 }
 
@@ -196,6 +196,8 @@ void invalidate_med(int med, int e, int reason) {
   // immediately invalidates the scanned medication by updating its
   // tag with the given reason while preserving other info
   // then, updates system status as well
+
+  Serial.print("med ");Serial.println(med);
   
   uint8_t data[16];
   uint8_t success;
