@@ -33,7 +33,7 @@ TMP102 thermometer(0x48);
 // Medication Information
 // These encode the maximum, and minimum, temp limits for each med.
 // Defined in order: Albuterol, Aspirin, Epi, Glucose
-const int med_high_temp[] = {80, 100, 100, 100};
+const int med_high_temp[] = {75, 100, 100, 73};
 const int med_low_temp[] = {0, 0, 32, 0};
 
 
