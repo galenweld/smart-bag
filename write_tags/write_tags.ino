@@ -18,7 +18,8 @@ A single value 0..99 representing the expiration date.
 
 VALID
 0 for valid
-1 for invalid
+1 for expired
+2 for temp
 
 For example 02:15:00 would represent a EpiPen expiring at 15 that is valid.
 

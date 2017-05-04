@@ -20,13 +20,23 @@
 #define PN532_RESET (3)  // Not connected by default on the NFC Shield
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
+
 // Stuff for thermometer
 TMP102 thermometer(0x48);
 
+// Definitions to make code more readable
+#define ALB (0)  // albuterol
+#define ASA (2)  // aspirin
+#define EPI (3)  // epinepherine
+#define GLC (4)  // glucose
+
+#define NOM (0)  // medication is normal
+#define EXP (1)  // medication is expired
+#define HOT (2)  // medication has exceeded environmental constraints
+
 // Global Var Defs
 float temp;
-int medStatus[] = {0, 0, 0, 0}; // Albuterol, Aspirin, Epi, Glucose
-// 0=good, 1=expired, 2=temp
+int medStatus[] = {NOM, NOM, NOM, NOM}; // Albuterol, Aspirin, Epi, Glucose
 int date = 0;
 
 void setup(void) {
@@ -85,11 +95,6 @@ void loop(void) {
       {
         Serial.println("Sector 1 (Blocks 4..7) has been authenticated");
         uint8_t data[16];
-    
-        // If you want to write something to block 4 to test with, uncomment
-        // the following line and this text should be read back in a minute
-        //memcpy(data, (const uint8_t[]){ 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, sizeof data);
-        //success = nfc.mifareclassic_WriteDataBlock (4, data);
 
         // Try to read the contents of block 4
         success = nfc.mifareclassic_ReadDataBlock(4, data);
@@ -106,6 +111,9 @@ void loop(void) {
           if (med_type == 1) aspirin(expires, valid);
           if (med_type == 2) epi(expires, valid);
           if (med_type == 3) glucose(expires, valid);
+          
+          // bad meds are given type = 5, they are ignored
+          if (med_type > 3) Serial.println("found a bad med");
       
           // Wait a bit before reading the card again
           delay(1000);
@@ -139,24 +147,24 @@ void report_status(void) {
   }
   else if (medStatus[0] != 0) {
     // bad albuterol
-    if (medStatus[1] == 1) Serial.println("LCD: Albuterol Expired");
-    if (medStatus[1] == 2) Serial.println("LCD: Albuterol out of temp");
+    if (medStatus[0] == 1) Serial.println("LCD: Albuterol Expired");
+    if (medStatus[0] == 2) Serial.println("LCD: Albuterol out of temp");
   }
   
-  else if (medStatus[0] != 0) {
+  else if (medStatus[1] != 0) {
     // bad aspirin
     if (medStatus[1] == 1) Serial.println("LCD: Aspirin Expired");
     if (medStatus[1] == 2) Serial.println("LCD: Aspirin out of temp");
   }
-  else if (medStatus[0] != 0) {
+  else if (medStatus[2] != 0) {
     // bad epi
-    if (medStatus[1] == 1) Serial.println("LCD: EpiPen Expired");
-    if (medStatus[1] == 2) Serial.println("LCD: EpiPen out of temp");
+    if (medStatus[2] == 1) Serial.println("LCD: EpiPen Expired");
+    if (medStatus[2] == 2) Serial.println("LCD: EpiPen out of temp");
   }
-  else if (medStatus[0] != 0) {
+  else if (medStatus[3] != 0) {
     // bad glucose
-    if (medStatus[1] == 1) Serial.println("LCD: Glucose Expired");
-    if (medStatus[1] == 2) Serial.println("LCD: Glucose out of temp");
+    if (medStatus[3] == 1) Serial.println("LCD: Glucose Expired");
+    if (medStatus[3] == 2) Serial.println("LCD: Glucose out of temp");
   }
 
   // Date and Temp
@@ -166,13 +174,39 @@ void report_status(void) {
   Serial.print("LCD: Date: ");
   Serial.println(date);
   Serial.println("");
+
+  // DEBUGGING
+  Serial.println("meds");
+  Serial.print(medStatus[0]);Serial.print(medStatus[1]);Serial.print(medStatus[2]);Serial.println(medStatus[3]);
   
 }
 
 
 // Medication handlers
+void med_handler(int m, int e, int v) {
+  // universal med handler. takes med, exp, and valid
+  // updates and invalidates as needed
+}
+
 void albuterol(int e, int v) {
   Serial.println("Found Albuterol");
+  if (date > e || v == 1) {
+    // med is expired
+    invalidate_med(0, 1);
+    Serial.println("expired");
+  }
+  else if (temp > 80 || v == 2) {
+    // med too hot
+    invalidate_med(0, 2);
+    Serial.println("hot");
+  }
+  else {
+    Serial.println("med ok");
+    medStatus[0] = 0;
+    }
+
+    Serial.print("exp");Serial.println(e);
+    Serial.print("val");Serial.println(v);
 }
 
 void aspirin(int e, int v) {
@@ -191,5 +225,16 @@ void glucose(int e, int v) {
 void invalidate_med(int med, int reason) {
   // immediately erases the scanned medication and invalidates it
   // then, updates system status for the given med with the given reason
+  
+  uint8_t data[16];
+  uint8_t success;
+  uint8_t bad_med[16] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  bad_med[0] = med; bad_med[2] = reason;
+  memcpy(data, bad_med, sizeof data);
+  success = nfc.mifareclassic_WriteDataBlock (4, data);
+
+  medStatus[med] = reason;
+
+  
 }
 
